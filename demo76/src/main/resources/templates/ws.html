@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Title</title>
+    <script th:src="@{sockjs.min.js}"></script>
+    <script th:src="@{stomp.js}"></script>
+    <script th:src="@{jquery.min.js}"></script>
+    <script type="text/javascript">
+        var stompClient=null;
+        function setConnected(connected) {
+            document.getElementById('connect').disabled=connected;
+            document.getElementById('disconnect').disabled=!connected;
+            document.getElementById('conversationDiv').style.visibility= connected ? 'visible' :'hidden'
+            $('#response').html();
+
+        }
+        function connect() {
+//        连接SockJS的endpoint
+            var socket=new SockJs('/endpoint');
+//        使用STOMP自协议的Websocket客户端
+            stompClient=Stomp.over(socket);
+//        连接websocket服务端
+            stompClient.connect({},function (frame) {
+                setConnected(true);
+                console.log("connected:"+frame);
+                //订阅目标---@SendTo设置的
+                stompClient.subscribe("/topic/getResponse",function (response) {
+                    showResponse(JSON.parse(response.body).responseMsg);
+                })
+            })
+        }
+        function disconnect() {
+            if(stompClient!=null){
+                stompClient.disconnect();
+            }
+            setConnected(false);
+            console.log("Disconnected");
+        }
+        function sendName() {
+            var name=$('name').val();
+//        发送消息---@MessageMapping中定义的
+            stompClient.send("/welcome",{},JSON.stringify({'name':name}));
+        }
+        function showResponse(message) {
+            var response=$("#response");
+            response.html(message);
+        }
+
+
+    </script>
+</head>
+<body onload="disconnect()">
+<noscript><h2 style="color:#ff0000">你浏览器不支持websocket</h2></noscript>
+<div>
+    <div>
+        <button id="connect" onclick="connect()">连接</button>
+        <button id="disconnect" disabled="disabled" onclick="disconnect();">断开连接</button>
+    </div>
+    <div id="conversationDiv">
+        <label>名字</label><input type="text" id="name"/>
+        <button id="sendName" onclick="sendName()">发送</button>
+        <p id="response"></p>
+    </div>
+</div>
+
+
+</body>
+</html>

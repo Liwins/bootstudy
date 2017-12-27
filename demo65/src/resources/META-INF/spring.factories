@@ -1,0 +1,3 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  cn.riversky.HelloServiceAutoConfiguration
+#若有多个自动配置，使用,隔开
